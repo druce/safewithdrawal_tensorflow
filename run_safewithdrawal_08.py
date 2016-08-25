@@ -57,13 +57,14 @@ stock_allocations = pd.Series(np.ones(years_retired) * 0.65)
 
 bond_allocations = 1 - stock_allocations
 
+# save starting scenario
 pickle_list = [const_spend, var_spend_pcts, stock_allocations, bond_allocations]
 pickle.dump( pickle_list, open( bestfile, "wb" ) )
 
 
 # start with a learning rate that learns quickly, gradually reduce it
 # run once with 50 or 100 steps to see which learning rates are effective
-# then plug in that solution and run each til no improvement for 300 or 500 steps
+# then plug in that solution and run each til no improvement for a large number of steps
 
 for learning_rate in [
         #0.00001, # too coarse, may be NaN
