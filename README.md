@@ -11,13 +11,13 @@ run for gamma = 8 with
   * repeatedly calls safewithdrawal.py
   * reduces learning rate each time
 
-`./safewithdrawal.py` learning_rate steps gamma fileprefix
+`./safewithdrawal.py` `learning_rate` `steps` `gamma` `fileprefix`
 
   * loads variables from `fileprefix`.pickle
   * runs optimization using `gamma` and `learning_rate` until no improvement for specified `steps`
   * saves variables and csv files summarizing outcome
   
-Safe Withdrawal with Certainty Equivalent Spending and Tensorflow Aug 2016.ipynb
+`Safe Withdrawal with Certainty Equivalent Spending and Tensorflow Aug 2016.ipynb`
   * Jupyter notebook which allows you to run step by step, includes comments and graphs
   * However running for a few hours in Jupyter not recommended, browser or Jupyter tends to hang
   
