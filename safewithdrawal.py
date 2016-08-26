@@ -180,7 +180,7 @@ class SafeWithdrawalModel:
                 self.one_minus_gamma = tf.sub(self.one, self.gamma, name="one_minus_gamma")
                 self.inv_one_minus_gamma = tf.div(self.one, self.one_minus_gamma, name="inv_one_minus_gamma")
                 
-                self.cost_multiplier = self.one_million
+                self.cost_multiplier = self.ten_thousand
 
                 # generate op for start_val
                 self.start_val_op = tf.constant(100.0, dtype=float_type, name ="port_start_val")
