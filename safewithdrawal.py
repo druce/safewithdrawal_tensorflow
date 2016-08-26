@@ -375,6 +375,8 @@ class SafeWithdrawalModel:
                 ce = tf.mul(tf.exp(u), input_length, name="%s_ce" % (prefix))
                 print ('%s Create CE op %f' % (strftime("%H:%M:%S"), self.sess.run(ce)))
             else:
+                # for high gamma numerical error is significant, and calculation is most accurate near 1 and 
+                # so divide by mean 
                 input_mean = tf.reduce_mean(input_tensor, name="%s_mean" % (prefix))
                 input_conditioned = tf.div(input_tensor, input_mean, name="%s_conditioned" % (prefix))
 
@@ -390,8 +392,7 @@ class SafeWithdrawalModel:
                 ce1 = tf.mul(self.one_minus_gamma, u, name="%s_ce1" % (prefix))
                 ce2 = tf.add(ce1, self.one, name="%s_ce2" % (prefix))
                 ce3 = tf.pow(ce2, self.inv_one_minus_gamma, name="%s_ce3" % (prefix))
-                ce4 = tf.mul(input_mean, ce3, name="%s_decondition" % (prefix))
-                ce = tf.mul(input_length, ce4, name="%s_ce" % (prefix))
+                ce = tf.mul(input_mean, ce3, name="%s_ce" % (prefix))
 
                 print ('%s Create CE op %f' % (strftime("%H:%M:%S"), self.sess.run(ce)))
             return ce
