@@ -57,12 +57,12 @@ gamma = 8.0
 
 startval = 100
 years_retired = 30
-# 1% constant spending
-const_spend_pct = .01
+# 1.5% constant spending
+const_spend_pct = 0.015
 const_spend = startval * const_spend_pct
 
 # var spending a function of years left
-var_spend_pcts = pd.Series([ 1.0 / (years_retired - ix) for ix in range(years_retired)])
+var_spend_pcts = pd.Series([ 1.0 / (years_retired - ix) - 0.01 for ix in range(years_retired)])
 
 # 50% stocks + 1% * years remaining
 stock_allocations = pd.Series([0.50 + 0.01 * (years_retired - ix)  for ix in range(years_retired)])
@@ -79,15 +79,15 @@ pickle.dump( pickle_list, open( bestfile, "wb" ) )
 
 for learning_rate in [
         #0.00001, # too coarse, may be NaN
-        0.00003, # too coarse, may be NaN
+        #0.00003, # too coarse, may be NaN
         0.000001, # coarse
         0.000003, # coarse
         0.0000001, # workhorse
         0.00000003, 
         0.00000001, # diminishing returns
         0.000000003,
-        0.000000001, #superfine
-        0.0000000003, 
+        #0.000000001, #superfine
+        #0.0000000003, 
         #0.0000000001, 
         #0.00000000001, 
 ]:
