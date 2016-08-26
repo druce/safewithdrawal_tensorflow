@@ -62,10 +62,10 @@ const_spend_pct = .01
 const_spend = startval * const_spend_pct
 
 # var spending a function of years left
-var_spend_pcts = pd.Series([ 1.0 / (30- ix) for ix in range(30)])
+var_spend_pcts = pd.Series([ 1.0 / (years_retired - ix) for ix in range(years_retired)])
 
-# 65% stocks
-stock_allocations = pd.Series(np.ones(years_retired) * 0.65)
+# 50% stocks + 1% * years remaining
+stock_allocations = pd.Series([0.50 + 0.01 * (years_retired - ix)  for ix in range(years_retired)])
 bond_allocations = 1 - stock_allocations
 
 # save starting scenario
@@ -79,7 +79,7 @@ pickle.dump( pickle_list, open( bestfile, "wb" ) )
 
 for learning_rate in [
         #0.00001, # too coarse, may be NaN
-        #0.00003, # too coarse, may be NaN
+        0.00003, # too coarse, may be NaN
         0.000001, # coarse
         0.000003, # coarse
         0.0000001, # workhorse
