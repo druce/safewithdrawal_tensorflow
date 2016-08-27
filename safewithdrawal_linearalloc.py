@@ -197,7 +197,9 @@ class SafeWithdrawalModel:
                 # generate ops for allocations for first n-1 assets
 
                 self.start_alloc_op = tf.Variable(self.start_alloc, dtype=float_type, name ="port_start_val")
+                self.sess.run(self.start_alloc_op.initializer)
                 self.end_alloc_op = tf.Variable(self.end_alloc, dtype=float_type, name ="port_start_val")
+                self.sess.run(self.end_alloc_op.initializer)
                 prefix = "alloc_%s" % names_list[0]
                 print("hello %d" % self.ret_years)
                 stock_alloc_ops = self.gen_stock_allocs(self.start_alloc_op, self.end_alloc_op, self.ret_years, prefix, verbose=False)
