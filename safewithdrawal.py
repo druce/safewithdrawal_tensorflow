@@ -575,7 +575,6 @@ class CohortHistory:
         colnames = ["%d" % (cohort+self.model.first_year) for cohort in cohorts]
         return pd.DataFrame(retlist, index = years, columns=colnames)
 
-
     def returns_by_year(self):
         """report returns by year for each cohort (ret_years rows x num_cohorts)"""
         dataframes = [cohort.as_dataframe() for cohort in self.model.cohort_history.cohort_list]
@@ -589,8 +588,6 @@ class CohortHistory:
 
         colnames = ["%d" % (cohort+self.model.first_year) for cohort in cohorts]
         return pd.DataFrame(retlist, index = years, columns=colnames)
-
-
 
     def summarize_by_year(self):
         """report on outcomes by retirement year, e.g. retirement year 1, 2...30"""
