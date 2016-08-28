@@ -721,6 +721,10 @@ class CohortHistoryOptimize():
 
             sys.stdout.flush()
 
+            self.best_bond_alloc = pd.Series([1 - bsa for bsa in self.best_stock_alloc])
+            pickle_list = [self.best_const_spend, self.best_var_spend, self.best_stock_alloc, self.best_bond_alloc]
+            pickle.dump( pickle_list, open( picklefile, "wb" ) )
+
             # every 10 report_steps show current best
             if step % (report_steps * 10) == 0:
                 print ("\n#Objective: %f\n" % (self.best_objective))
