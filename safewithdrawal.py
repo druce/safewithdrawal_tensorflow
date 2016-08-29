@@ -698,16 +698,16 @@ class CohortHistoryOptimize():
                   (strftime("%H:%M:%S"), self.model.sess.run(cost_op_2)))
                 
             cost_op_3 = tf.add(cost_op_2, model.cost_alloc_max_1_op, name="cost_add_alloc_max_1")
-            print("%s Add soft constraint penalty if stock alloc > 1: %f" % (strftime("%H:%M:%S"), 
-                                                                             self.model.sess.run(cost_op_3)))
+            print("%s Add soft constraint penalty if stock alloc > 1: %f" % 
+                  (strftime("%H:%M:%S"), self.model.sess.run(cost_op_3)))
                 
             cost_op_4 = tf.add(cost_op_3, model.cost_vspend_min_0_op, name="cost_vspend_min_0")                
-            print("%s Add soft constraint penalty if var spending < 0: %f" % (strftime("%H:%M:%S"), 
-                                                                              self.model.sess.run(cost_op_4)))
+            print("%s Add soft constraint penalty if var spending < 0: %f" % 
+                  (strftime("%H:%M:%S"), self.model.sess.run(cost_op_4)))
 
             cost_op_5 = tf.add(cost_op_4, model.cost_cspend_min_0_op, name="cost_cspend_min_0")
-            print("%s Add soft constraint if const spending < 0: %f" % (strftime("%H:%M:%S"),
-                                                                        self.model.sess.run(cost_op_5)))
+            print("%s Add soft constraint if const spending < 0: %f" % 
+                  (strftime("%H:%M:%S"), self.model.sess.run(cost_op_5)))
             
             self.cost_op = tf.add(cost_op_5, model.cost_alloc_decrease_op, name="cost_alloc_decrease")
             print("%s Add soft constraint if stock alloc increases in any year: %f" %
