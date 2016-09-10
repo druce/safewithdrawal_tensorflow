@@ -402,7 +402,7 @@ class SafeWithdrawalModel:
                     u0 = u
                     u = tf.reduce_mean(tf.mul(u0, survival_tensor, name="%s_u_surv" % prefix),
                                        name="%s_u" % prefix)
-                ce = tf.mul(tf.exp(u), input_length, name="%s_ce" % prefix)
+                ce = tf.exp(u, name="%s_ce" % prefix)
                 print ('%s Create CE op %f' % (strftime("%H:%M:%S"), self.sess.run(ce)))
             else:
                 # for high gamma numerical error is significant, calculation is most accurate near 1
