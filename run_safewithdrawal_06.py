@@ -1,0 +1,93 @@
+#!/home/ubuntu/anaconda2/bin/python
+
+# MIT License
+
+# Copyright (c) 2016 Druce Vertes drucev@gmail.com
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+from __future__ import print_function
+
+import argparse
+import pickle
+from time import strftime
+import sys
+import os
+
+import numpy as np
+import pandas as pd
+
+gamma = 6.0
+fileprefix = "best%02.0f" % gamma
+bestfile = "%s.pickle" % (fileprefix)
+
+max_unimproved_steps = 2000
+
+# startval = 100
+# years_retired = 30
+# const_spend_pct = .02
+# const_spend = startval * const_spend_pct
+
+# var_spend_pcts = pd.Series(np.ones(years_retired) * 0.02)
+# var_spend_pcts[-1]=1.0
+# stock_allocations = pd.Series(np.ones(years_retired) * 0.65)
+
+startval = 100
+years_retired = 30
+
+#Objective: 5.532400
+
+const_spend = 0.056814212343
+var_spend_pcts = pd.Series([0.0487484582839013, 0.052064278112707051, 0.054283440648036543, 0.055358685319862926, 0.056964481357028647, 0.059392065048593241, 0.060975168781251018, 0.062928703870758496, 0.066927275187711216, 0.070518139976767022, 0.074027103376216652, 0.078309946366581576, 0.083608202035011014, 0.087290103019714751, 0.090141160902192416, 0.094393100130908569, 0.09912036503003184, 0.10570948051164114, 0.11293608808945538, 0.12022883643614249, 0.12685041578279302, 0.13586572879900299, 0.14817244533359028, 0.16259081966824263, 0.18320380106112127, 0.21268517966685346, 0.2579506157260093, 0.33730892752801139, 0.50103229237991043, 1.0000000001165821])
+stock_allocations = pd.Series([0.98996309608103883, 0.98362319235218676, 0.97797282796669438, 0.96917360199044766, 0.96838174555623213, 0.96192228254266399, 0.96016423934774175, 0.95723510477668083, 0.95547248473655633, 0.95491337861891157, 0.95476860362127203, 0.95125735389379107, 0.95025837341836628, 0.94728200788028205, 0.93806113457348517, 0.93569037075640704, 0.93051462697536158, 0.92675652746290738, 0.9172091612651897, 0.90934087049166057, 0.90856935843553799, 0.90744713046351688, 0.90443300539788873, 0.89449647074510052, 0.89285290778645277, 0.88488045391638293, 0.87771396029052773, 0.86873524238917899, 0.8632277469222267, 0.85565449640642255])
+
+#Objective: 4.777180
+
+const_spend = 0.062482504315
+var_spend_pcts = pd.Series([0.046948059137788122, 0.052430141668950596, 0.055430610445051966, 0.05588947559043235, 0.057597711548853237, 0.061511835974758067, 0.062861313369496019, 0.063675350093496785, 0.069512692068985318, 0.073209755712985533, 0.076362407903941568, 0.080592286047816375, 0.087090394227863646, 0.090853105534043771, 0.093136639721977707, 0.098266921514186312, 0.10307186436544315, 0.10965490654349351, 0.11702999358472103, 0.12500616681434881, 0.1307654657317662, 0.13947948789191048, 0.15192018455956802, 0.16526999239478579, 0.18575692994459608, 0.21481445491229237, 0.25911607124869407, 0.33780707502949686, 0.50131190136433779, 1.0000000001165821])
+stock_allocations = pd.Series([0.98565259501309066, 0.97914508493111596, 0.97561315828529349, 0.96913286401641552, 0.96774995169218525, 0.96192509303240181, 0.96026353361552597, 0.95777761170415299, 0.95479510999387496, 0.95419113206645656, 0.95310425723300973, 0.95113888859041806, 0.94979133217672362, 0.94805103607411734, 0.93897812886795706, 0.93645077173660551, 0.93122785218648851, 0.9265639756610291, 0.91754762722640648, 0.9099202734357581, 0.90907676277665372, 0.90783818391730053, 0.90462345720828097, 0.89489281390272313, 0.89303338573804303, 0.88489679614955619, 0.87774880094077379, 0.86877287918170354, 0.8632330121599604, 0.8556596243649095])
+
+bond_allocations = 1 - stock_allocations
+
+# save starting scenario
+pickle_list = [const_spend, var_spend_pcts, stock_allocations, bond_allocations]
+pickle.dump( pickle_list, open( bestfile, "wb" ) )
+
+# start with a learning rate that learns quickly, gradually reduce it
+# run once with 50 or 100 steps to see which learning rates are effective
+# then plug in that solution and run each til no improvement for a large number of steps
+
+for learning_rate in [
+        #0.00001, # too coarse, may be NaN
+        0.00003, # too coarse, may be NaN
+        0.000001, # coarse
+        0.000003, # coarse
+        0.0000001, # workhorse
+        0.00000003, 
+        0.00000001, # diminishing returns
+        0.000000003,
+        #0.000000001, #superfine
+        #0.0000000003, 
+        #0.0000000001, 
+        #0.00000000001, 
+]:
+    cmdstr = './safewithdrawal.py %.12f %d %f %s' % (learning_rate, max_unimproved_steps, gamma, fileprefix)
+    print(cmdstr)
+    os.system(cmdstr)
+

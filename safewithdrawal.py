@@ -779,7 +779,7 @@ class CohortHistoryOptimize():
             # every 10 report_steps show current best
             if step % (report_steps * 10) == 0:
                 print ("\n#Objective: %f\n" % self.best_objective)
-                print ("const_spend = %f" % self.best_const_spend)
+                print ("const_spend = %.12f" % self.best_const_spend)
                 print ("var_spend_pcts = pd.Series(%s)" % str(self.best_var_spend))
                 print ("stock_allocations = pd.Series(%s)\n" %str(self.best_stock_alloc))
             
@@ -790,7 +790,7 @@ class CohortHistoryOptimize():
         self.steps_ago = 0 # how many steps since objective improved
 
         print("%s Objective: %f" % (strftime("%H:%M:%S"), self.best_objective))
-        print("%s Constant spending: %f" % (strftime("%H:%M:%S"), self.best_const_spend))
+        print("%s Constant spending: %.12f" % (strftime("%H:%M:%S"), self.best_const_spend))
         print("%s Variable spending by year" % strftime("%H:%M:%S"))
         print(self.best_var_spend)
         print("%s Stock allocation by year" % strftime("%H:%M:%S"))
@@ -881,7 +881,7 @@ if __name__ == "__main__":
     # reduce learning rate if no improvement for a while
     # end when learning rate is too small to make significant improvement
 
-    max_steps = 100001 # add 1 to get one last iteration to print
+    max_steps = 200001 # add 1 to get one last iteration to print
     max_steps_unimproved = args.steps
     report_steps = 50
     learning_rate = model.optimizer.learning_rate
