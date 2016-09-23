@@ -903,7 +903,7 @@ if __name__ == "__main__":
     df_summary = model.cohort_history.summarize_by_year()
     df_years = model.cohort_history.spend_by_year()
 
-    plotly_name = "plotly_data_%02.0f" % gamma
+    plotly_name = "plotly_data_%02.0f" % model.gamma
     f = open('%s.json' % plotly_name,'w')
     f.write ("%s = [" % plotly_name)
 
