@@ -106,7 +106,6 @@ bond_allocations = 1 - stock_allocations
 # 2% each const and var spending
 startval = 100
 const_spend_pct = .02
-const_spend = startval * const_spend_pct
 
 var_spend_pcts = pd.Series(np.ones(years_retired) * 0.02)
 
@@ -132,7 +131,7 @@ class SafeWithdrawalModel:
                  names_list, # names of assets
                  allocations_list, # list of % allocated to each asset class
                  start_val, # starting portfolio value e.g. 100
-                 const_spend,
+                 const_spend_pct,
                  var_spend_pcts, 
                  gamma,
                  survival,
@@ -147,7 +146,7 @@ class SafeWithdrawalModel:
         self.num_assets = len(self.names_list)
         self.start_val = start_val
         self.ret_years = len(allocations_list[0])
-        self.const_spend = const_spend
+        self.const_spend_pct = const_spend_pct
         self.var_spend_pcts = var_spend_pcts
         self.survival=survival
         self.gamma = gamma
@@ -246,19 +245,20 @@ class SafeWithdrawalModel:
                 self.allocation_ops.append(bond_alloc_ops)
 
                 # generate ops for const, var spending
-                self.const_spending_op = tf.Variable(const_spend, dtype=float_type, name="const_spend")
-                self.sess.run(self.const_spending_op.initializer)
+                self.const_spend_pct_op = tf.Variable(const_spend_pct, dtype=float_type, name="const_spend_pct")
+                self.sess.run(self.const_spend_pct_op.initializer)
+                self.const_spending_op = tf.mul(self.const_spend_pct_op, self.one_hundred, name="const_spend")
 
                 self.var_spending_ops = self.gen_tf_var_list(self.var_spend_pcts, "var_spend",
                                                              verbose=self.verbose)
 
                 # all ops to be trained
-                self.all_var_ops = [self.const_spending_op] + \
+                self.all_var_ops = [self.const_spend_pct_op] + \
                                    self.var_spending_ops + \
                                    self.allocation_ops[0]
             
                 # op for soft constraint: const spending > 0
-                self.cspend_min_0_op = tf.maximum(self.zero, tf.neg(self.const_spending_op, 
+                self.cspend_min_0_op = tf.maximum(self.zero, tf.neg(self.const_spend_pct_op, 
                                                                     name="neg_cspend_min_0_op"), 
                                                   name="cspend_min_0_op")
                 self.cost_cspend_min_0_op = tf.mul(self.cost_multiplier,
@@ -389,12 +389,13 @@ class SafeWithdrawalModel:
 
         return op_list
 
-    def gen_ce(self, input_tensor, prefix, survival_tensor=None):
+    def gen_ce(self, input_tensor, prefix, survival_tensor=None, verbose=False):
       with tf.device("/cpu:0"): 
         with self.graph.as_default():        
             input_length = np.float64(input_tensor.get_shape().as_list()[0])
 
-            print("%s Create ce op with gamma: %f" % (strftime("%H:%M:%S"), self.gamma))
+            if verbose:
+                print("%s Create ce op with gamma: %f" % (strftime("%H:%M:%S"), self.gamma))
             if self.gamma == 1.0:
                 u = tf.reduce_mean(tf.log(input_tensor), name="%s_u" % prefix)
                 #print(self.sess.run(u))
@@ -403,7 +404,8 @@ class SafeWithdrawalModel:
                     u = tf.reduce_mean(tf.mul(u0, survival_tensor, name="%s_u_surv" % prefix),
                                        name="%s_u" % prefix)
                 ce = tf.exp(u, name="%s_ce" % prefix)
-                print ('%s Create CE op %f' % (strftime("%H:%M:%S"), self.sess.run(ce)))
+                if verbose:
+                    print ('%s Create CE op %f' % (strftime("%H:%M:%S"), self.sess.run(ce)))
             else:
                 # for high gamma numerical error is significant, calculation is most accurate near 1
                 # so divide by mean 
@@ -425,7 +427,8 @@ class SafeWithdrawalModel:
                 ce3 = tf.pow(ce2, self.inv_one_minus_gamma, name="%s_ce3" % prefix)
                 ce = tf.mul(input_mean, ce3, name="%s_ce" % prefix)
 
-                print ('%s Create CE op %f' % (strftime("%H:%M:%S"), self.sess.run(ce)))
+                if verbose:
+                    print ('%s Create CE op %f' % (strftime("%H:%M:%S"), self.sess.run(ce)))
             return ce
 
 
@@ -437,10 +440,12 @@ class Cohort:
         self.model = model
         self.cohort_start_year = cohort_start_year
         self.name = "cohort_%d" % cohort_start_year
-        print("%s Instantiating cohort %s" % (strftime("%H:%M:%S"), self.name))
         self.gen_tf_ops()
         
-    def gen_tf_ops(self):
+    def gen_tf_ops(self, verbose=False):
+
+        if verbose:
+            print("%s Instantiating cohort %s" % (strftime("%H:%M:%S"), self.name))
         
         stock_returns = self.model.return_ops[0]
         bond_returns = self.model.return_ops[1]
@@ -457,9 +462,10 @@ class Cohort:
         with self.model.graph.as_default():        
           with tf.device("/cpu:0"): 
 
-            print ("%s Generating %d years from %d" % (strftime("%H:%M:%S"),
-                                                       self.model.ret_years,
-                                                       self.cohort_start_year))
+            if verbose:
+                print ("%s Generating %d years from %d" % (strftime("%H:%M:%S"),
+                                                           self.model.ret_years,
+                                                           self.cohort_start_year))
             
             start_year_ix = self.cohort_start_year - self.model.first_year
             for ix in range(self.model.ret_years):
@@ -716,7 +722,7 @@ class CohortHistoryOptimize():
             self.best_objective = -self.model.sess.run(self.cost_op)
             print("%s All inclusive objective to be minimized: %f" % (strftime("%H:%M:%S"), 
                                                                       -self.best_objective))
-            self.best_const_spend = self.model.sess.run(model.const_spending_op)
+            self.best_const_spend = self.model.sess.run(model.const_spend_pct_op)
             self.best_var_spend = self.model.sess.run(model.var_spending_ops)
             self.best_stock_alloc = self.model.sess.run(model.allocation_ops[0])
 
@@ -741,7 +747,7 @@ class CohortHistoryOptimize():
             sys.stdout.flush()
         elif objective > self.best_objective:
             self.best_objective = objective
-            self.best_const_spend = self.model.sess.run(model.const_spending_op)
+            self.best_const_spend = self.model.sess.run(model.const_spend_pct_op)
             self.best_var_spend = self.model.sess.run(model.var_spending_ops)
             self.best_stock_alloc = self.model.sess.run(model.allocation_ops[0])
             self.best_step = step
@@ -779,7 +785,7 @@ class CohortHistoryOptimize():
             # every 10 report_steps show current best
             if step % (report_steps * 10) == 0:
                 print ("\n#Objective: %f\n" % self.best_objective)
-                print ("const_spend = %.12f" % self.best_const_spend)
+                print ("const_spend_pct = %.12f" % self.best_const_spend)
                 print ("var_spend_pcts = pd.Series(%s)" % str(self.best_var_spend))
                 print ("stock_allocations = pd.Series(%s)\n" %str(self.best_stock_alloc))
             
@@ -838,9 +844,9 @@ if __name__ == "__main__":
                                                               picklefile))
 
     print("opening picklefile %s" % picklefile)
-    const_spend, var_spend_pcts, stock_allocations, bond_allocations = pickle.load( open(picklefile, "rb" ) )
+    const_spend_pct, var_spend_pcts, stock_allocations, bond_allocations = pickle.load( open(picklefile, "rb" ) )
 
-    print ("const spend: %f" % const_spend)
+    print ("const spend: %f" % const_spend_pct)
     print ("variable spend:")
     print (var_spend_pcts)
     print ("stock allocation:" )
@@ -850,7 +856,7 @@ if __name__ == "__main__":
                                 names_list = ["stocks","bonds"], 
                                 allocations_list = [stock_allocations, bond_allocations],
                                 start_val = 100.0,
-                                const_spend = const_spend,
+                                const_spend_pct = const_spend_pct,
                                 var_spend_pcts = var_spend_pcts,
                                 gamma = args.gamma,
                                 survival=None
@@ -861,14 +867,9 @@ if __name__ == "__main__":
 
     print('%s Summary by cohort' % strftime("%H:%M:%S"))
     print(model.cohort_history.as_dataframe())
-    all_years = model.cohort_history.spend_by_year()
-    all_years.to_csv(yearsfile, format="%.18f")
-    ret_years = model.cohort_history.returns_by_year()
-    ret_years.to_csv(returnsfile, format="%.18f")
 
     summary = model.cohort_history.summarize_by_year()
     print(summary)
-    summary.to_csv(csvfile, format="%.18f")
 
     # run optimizer
     # set an initial learning rate that improves objective by a reasonable amount each step
@@ -881,7 +882,7 @@ if __name__ == "__main__":
     # reduce learning rate if no improvement for a while
     # end when learning rate is too small to make significant improvement
 
-    max_steps = 200001 # add 1 to get one last iteration to print
+    max_steps = 1000001 # add 1 to get one last iteration to print
     max_steps_unimproved = args.steps
     report_steps = 50
     learning_rate = model.optimizer.learning_rate
@@ -898,3 +899,33 @@ if __name__ == "__main__":
     pickle_list = [const_spend, var_spend_pcts, stock_allocations, bond_allocations]
     pickle.dump( pickle_list, open( picklefile, "wb" ) )
 
+    # output each series for chart
+    df_summary = model.cohort_history.summarize_by_year()
+    df_years = model.cohort_history.spend_by_year()
+
+    plotly_name = "plotly_data_%02.0f" % gamma
+    f = open('%s.json' % plotly_name,'w')
+    f.write ("%s = [" % plotly_name)
+
+    # indiv years
+    for ix in range(model.first_year, model.first_year + model.ret_cohorts):
+        f.write ("%s," % str(list(df_years[str(ix)])))
+
+        # mean, min, max etc.
+        f.write ("%s," % str(list(df_summary.spend_mean)))
+        f.write ("%s," % str(list(df_summary.spend_max)))
+        f.write ("%s," % str(list(df_summary.spend_min)))
+        f.write ("%s," % str(list(df_summary.spend_mean)))
+        f.write ("%s," % str(list(df_summary.spend_mean - df_summary.spend_sd)))
+        f.write ("%s," % str(list(df_summary.spend_mean + df_summary.spend_sd)))
+
+    f.write ("]")
+    f.close()
+
+    all_years = model.cohort_history.spend_by_year()
+    all_years.to_csv(yearsfile, format="%.18f")
+    ret_years = model.cohort_history.returns_by_year()
+    ret_years.to_csv(returnsfile, format="%.18f")
+
+    summary = model.cohort_history.summarize_by_year()
+    summary.to_csv(csvfile, format="%.18f")
