@@ -911,13 +911,13 @@ if __name__ == "__main__":
     for ix in range(model.first_year, model.first_year + model.ret_cohorts):
         f.write ("%s," % str(list(df_years[str(ix)])))
 
-        # mean, min, max etc.
-        f.write ("%s," % str(list(df_summary.spend_mean)))
-        f.write ("%s," % str(list(df_summary.spend_max)))
-        f.write ("%s," % str(list(df_summary.spend_min)))
-        f.write ("%s," % str(list(df_summary.spend_mean)))
-        f.write ("%s," % str(list(df_summary.spend_mean - df_summary.spend_sd)))
-        f.write ("%s," % str(list(df_summary.spend_mean + df_summary.spend_sd)))
+    # mean, min, max etc.
+    f.write ("%s," % str(list(df_summary.spend_mean)))
+    f.write ("%s," % str(list(df_summary.spend_max)))
+    f.write ("%s," % str(list(df_summary.spend_min)))
+    f.write ("%s," % str(list(df_summary.spend_mean)))
+    f.write ("%s," % str(list(df_summary.spend_mean - df_summary.spend_sd)))
+    f.write ("%s," % str(list(df_summary.spend_mean + df_summary.spend_sd)))
 
     f.write ("]")
     f.close()
