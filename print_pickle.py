@@ -17,6 +17,6 @@ picklefile = args.picklefile
 const_spend_pct, var_spend_pcts, stock_allocations, bond_allocations = pickle.load( open(picklefile, "rb" ) )
 
 print ("const_spend = %.12f" % const_spend_pct)
-print ("var_spend_pcts = pd.Series(%s)" % str(var_spend_pcts))
-print ("stock_allocations = pd.Series(%s)\n" %str(stock_allocations))
+print ("var_spend_pcts = pd.Series(%s)" % str(list(var_spend_pcts)))
+print ("stock_allocations = pd.Series(%s)\n" %str(list(stock_allocations)))
 
