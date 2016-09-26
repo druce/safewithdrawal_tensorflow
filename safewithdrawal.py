@@ -431,6 +431,29 @@ class SafeWithdrawalModel:
                     print ('%s Create CE op %f' % (strftime("%H:%M:%S"), self.sess.run(ce)))
             return ce
 
+    def dump_json(self):
+        # output each series for chart
+        df_summary = self.cohort_history.summarize_by_year()
+        df_years = self.cohort_history.spend_by_year()
+
+        plotly_name = "plotly_data_%02.0f" % self.gamma
+        f = open('%s.json' % plotly_name,'w')
+        f.write ("%s = [" % plotly_name)
+
+        # indiv years
+        for ix in range(self.first_year, self.first_year + self.ret_cohorts):
+            print(ix)
+            f.write ("%s," % str(list(df_years[str(ix)])))
+
+        # mean, min, max etc.
+        f.write ("%s,\n" % str(list(df_summary.spend_mean)))
+        f.write ("%s,\n" % str(list(df_summary.spend_max)))
+        f.write ("%s,\n" % str(list(df_summary.spend_min)))
+        f.write ("%s,\n" % str(list(df_summary.spend_mean - df_summary.spend_sd)))
+        f.write ("%s,\n" % str(list(df_summary.spend_mean + df_summary.spend_sd)))
+
+        f.write ("];\n")
+        f.close()
 
 class Cohort:
     """Cohort represents experience of an individual 
@@ -865,6 +888,8 @@ if __name__ == "__main__":
     # generate cohorts 
     model.cohort_history = CohortHistory(model)
 
+    model.dump_json()
+
     print('%s Summary by cohort' % strftime("%H:%M:%S"))
     print(model.cohort_history.as_dataframe())
 
@@ -899,28 +924,7 @@ if __name__ == "__main__":
     pickle_list = [const_spend, var_spend_pcts, stock_allocations, bond_allocations]
     pickle.dump( pickle_list, open( picklefile, "wb" ) )
 
-    # output each series for chart
-    df_summary = model.cohort_history.summarize_by_year()
-    df_years = model.cohort_history.spend_by_year()
-
-    plotly_name = "plotly_data_%02.0f" % model.gamma
-    f = open('%s.json' % plotly_name,'w')
-    f.write ("%s = [" % plotly_name)
-
-    # indiv years
-    for ix in range(model.first_year, model.first_year + model.ret_cohorts):
-        f.write ("%s," % str(list(df_years[str(ix)])))
-
-    # mean, min, max etc.
-    f.write ("%s," % str(list(df_summary.spend_mean)))
-    f.write ("%s," % str(list(df_summary.spend_max)))
-    f.write ("%s," % str(list(df_summary.spend_min)))
-    f.write ("%s," % str(list(df_summary.spend_mean)))
-    f.write ("%s," % str(list(df_summary.spend_mean - df_summary.spend_sd)))
-    f.write ("%s," % str(list(df_summary.spend_mean + df_summary.spend_sd)))
-
-    f.write ("]")
-    f.close()
+    model.dump_json()
 
     all_years = model.cohort_history.spend_by_year()
     all_years.to_csv(yearsfile, format="%.18f")
